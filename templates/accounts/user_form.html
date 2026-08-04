@@ -1,10 +1,1 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="card" style="max-width:500px">
-  <h2>Create User</h2>
-  <form method="post">{% csrf_token %}{{ form.as_p }}
-    <button class="btn" type="submit">Create</button>
-    <a class="btn secondary" href="{% url 'user_list' %}">Cancel</a>
-  </form>
-</div>
-{% endblock %}
+{% extends "base.html" %}{% block title %}Create user · FileFlow{% endblock %}{% block content %}<div class="page-heading"><div><h1>Create workflow user</h1><p>Assign a role and employee level where applicable.</p></div></div><section class="card card-pad form-card"><h2>Account details</h2><form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn" type="submit">Create user</button> <a class="btn secondary" href="{% url 'user_list' %}">Cancel</a></form></section>{% endblock %}

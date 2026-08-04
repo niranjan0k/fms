@@ -1,47 +1,76 @@
-# FMS POC — Digital Letter / Order Movement & Multi-Level Approval
+# FileFlow — Digital Letter & Order Workflow POC
 
-Django 5 + PostgreSQL 16 + Django Templates. Implements the workflow from POC_Plan.docx.
+FileFlow is a Django proof of concept for moving official letters and orders through a controlled, multi-level approval workflow. It implements the workflow defined in `POC_Plan.docx`: Director creation, Minister review, sequential employee processing, optional comments, status tracking, and a complete movement audit trail.
+
+## What it does
+
+- Creates letters and orders with an automatic reference number in the format `FMS/YYYY/000001`.
+- Routes correspondence from the Director to the Minister and back, or through a configurable employee chain.
+- Enforces sequential employee routing: Director → Level 1 → Level 2 → … → final level → Complete.
+- Allows an optional forwarding note and separate comments at every stage.
+- Shows the current holder, state, comments, and timestamped movement history to all signed-in roles.
+- Lets the Director (Super Admin) create Minister and employee accounts, including employee workflow levels.
+- Provides a responsive sidebar-based interface for the dashboard, tracking, correspondence detail, and user management screens.
 
 ## Roles
-- **Director** (Super Admin): creates letters, forwards to Minister or Employees, manages users.
-- **Minister**: reviews letters forwarded by Director, comments, returns.
-- **Employee (Level 1..N)**: receives, comments, forwards to next level or back; last level marks Complete.
 
-## Quick start (Docker)
-```bash
-cp .env.example .env
-docker compose up --build
-# in another terminal:
-docker compose exec web python manage.py createsuperuser
-# then open http://localhost:8000/admin to set role=DIRECTOR on that user,
-# and create Minister + Employee (level 1,2,3) users via the app UI.
+| Role | Capabilities |
+| --- | --- |
+| Director (Super Admin) | Creates letters/orders, sends an item to the Minister or Level 1 employee, tracks all items, and manages users. |
+| Minister | Reviews items received from the Director, comments, and returns them to the Director. |
+| Next Level Employee | Views assigned items, comments, forwards to the next numbered level, or returns an item to the Director. The highest configured level can mark an item complete. |
+
+## Workflow
+
+```text
+Director → Minister → Director
+        └→ Employee Level 1 → Level 2 → … → Final Level → Complete
+                                      └→ Director (return)
 ```
 
-## Quick start (local)
-```bash
-python -m venv .venv && source .venv/bin/activate
+Comments are optional and are retained against the correspondence reference number. All creates, forwards, returns, and completions are recorded in the movement history and audit log.
+
+## Local setup
+
+### Prerequisites
+
+- Python 3.12+
+- PostgreSQL 16+ (or a compatible PostgreSQL version)
+
+### Install and run
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-createdb fms   # requires local Postgres, user 'fms' password 'fms'
-cp .env.example .env
-python manage.py makemigrations accounts letters workflow audit
+```
+
+Create a PostgreSQL database, then create `.env` in the project root:
+
+```env
+DJANGO_SECRET_KEY=change-this-for-your-environment
+DJANGO_DEBUG=1
+DATABASE_URL=postgres://fms:fms@localhost:5432/fms
+```
+
+Run migrations and start the server:
+
+```powershell
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Then in Django admin, edit the superuser to set **role=DIRECTOR**. Login at
-`/accounts/login/` and use the app to create Minister/Employee accounts.
+Open `http://127.0.0.1:8000/accounts/login/`. In Django admin (`/admin/`), update the superuser’s role to **Director (Super Admin)**. Then use **User management** to create a Minister and employees with levels `1`, `2`, `3`, and so on.
 
-## Reference number
-Auto-generated on create using PG sequence `letter_ref_seq` → `FMS/{YYYY}/{000123}`.
+## Project layout
 
-## Structure
-- `apps/accounts` — custom User with `role` + `level`
-- `apps/letters` — Letter model with `django-fsm` state machine
-- `apps/workflow` — Movement (history) + Comment
-- `apps/audit` — AuditLog written via post_save signal on Movement
+- `apps/accounts` — custom user model, roles, and Director-managed account creation
+- `apps/letters` — correspondence model, forms, screens, and workflow transitions
+- `apps/workflow` — movement history and comments
+- `apps/audit` — audit log entries for movement events
+- `templates` — responsive FileFlow interface and pages
 
-## Workflow states
-`DRAFT → WITH_DIRECTOR ↔ WITH_MINISTER`
-`WITH_DIRECTOR → WITH_EMPLOYEE (chain) → COMPLETE`
-Employees can also return to Director.
+## POC boundaries
+
+This is a demonstration implementation. Production rollout should add stronger authorization review, secure file handling, notification delivery, digital signatures, deployment hardening, backups, and load/security testing.

@@ -1,15 +1,1 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="card">
-  <div style="display:flex;justify-content:space-between;align-items:center">
-    <h2>Users</h2><a class="btn" href="{% url 'user_create' %}">+ New User</a>
-  </div>
-  <table><thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Level</th><th>Email</th></tr></thead><tbody>
-  {% for u in users %}<tr>
-    <td>{{ u.username }}</td><td>{{ u.get_full_name }}</td>
-    <td><span class="badge">{{ u.get_role_display }}</span></td>
-    <td>{{ u.level|default:"—" }}</td><td>{{ u.email }}</td>
-  </tr>{% endfor %}
-  </tbody></table>
-</div>
-{% endblock %}
+{% extends "base.html" %}{% block title %}User management · FileFlow{% endblock %}{% block content %}<div class="page-heading"><div><h1>User management</h1><p>Create and review role-based access for the workflow.</p></div><a class="btn" href="{% url 'user_create' %}">＋ Create user</a></div><section class="card"><div class="table-wrap"><table><thead><tr><th>User</th><th>Role</th><th>Level</th><th>Email</th></tr></thead><tbody>{% for u in users %}<tr><td><strong>{{ u.get_full_name|default:u.username }}</strong><br><span class="muted">@{{ u.username }}</span></td><td><span class="badge {% if u.is_director %}director{% elif u.is_minister %}minister{% endif %}">{{ u.get_role_display }}</span></td><td>{{ u.level|default:"—" }}</td><td class="muted">{{ u.email|default:"—" }}</td></tr>{% empty %}<tr><td class="empty" colspan="4">No users have been created.</td></tr>{% endfor %}</tbody></table></div></section>{% endblock %}

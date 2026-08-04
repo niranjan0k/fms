@@ -1,9 +1,10 @@
 {% extends "base.html" %}
-{% block content %}
-<div class="card" style="max-width:400px;margin:60px auto">
-  <h2>Login</h2>
-  <form method="post">{% csrf_token %}{{ form.as_p }}
-    <button class="btn" type="submit">Sign in</button>
-  </form>
-</div>
+{% block title %}Sign in · FileFlow{% endblock %}
+{% block login_content %}
+<section class="card login-card">
+  <div class="brand"><span class="brand-mark">↗</span><span>FileFlow<small>Management System</small></span></div>
+  <h1 style="font-size:22px;margin:0 0 5px">Welcome back</h1>
+  <p class="muted" style="margin:0 0 22px">Sign in to manage official correspondence.</p>
+  <form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn" type="submit" style="width:100%">Sign in</button></form>
+</section>
 {% endblock %}

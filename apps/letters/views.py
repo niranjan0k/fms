@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
-from apps.accounts.models import Role
+from apps.accounts.models import Role, User
 from apps.workflow.models import Movement, Comment
 from .forms import LetterCreateForm, ForwardForm, CommentOnlyForm
 from .models import Letter, LetterStatus
@@ -20,7 +20,14 @@ def letter_list(request):
         qs = qs.filter(created_by=u)
     elif tab == "all":
         pass  # everyone can view status per POC spec
-    return render(request, "letters/list.html", {"letters": qs, "tab": tab})
+    all_letters = Letter.objects.all()
+    return render(request, "letters/list.html", {
+        "letters": qs, "tab": tab,
+        "inbox_count": all_letters.filter(current_holder=u).exclude(status=LetterStatus.COMPLETE).count(),
+        "open_count": all_letters.exclude(status=LetterStatus.COMPLETE).count(),
+        "complete_count": all_letters.filter(status=LetterStatus.COMPLETE).count(),
+        "total_count": all_letters.count(),
+    })
 
 
 @login_required
@@ -55,8 +62,10 @@ def letter_detail(request, pk):
     comment_form = CommentOnlyForm()
     can_act = (letter.current_holder_id == request.user.id
                and letter.status != LetterStatus.COMPLETE)
+    final_level = User.objects.filter(role=Role.EMPLOYEE).order_by("-level").values_list("level", flat=True).first()
     can_complete = (can_act and request.user.is_employee
-                    and letter.status == LetterStatus.WITH_EMPLOYEE)
+                    and letter.status == LetterStatus.WITH_EMPLOYEE
+                    and final_level is not None and request.user.level == final_level)
     return render(request, "letters/detail.html", {
         "letter": letter, "movements": movements, "comments": comments,
         "forward_form": forward_form, "comment_form": comment_form,
@@ -96,6 +105,9 @@ def letter_complete(request, pk):
     letter = get_object_or_404(Letter, pk=pk)
     if letter.current_holder_id != request.user.id:
         return HttpResponseForbidden()
+    final_level = User.objects.filter(role=Role.EMPLOYEE).order_by("-level").values_list("level", flat=True).first()
+    if not (request.user.is_employee and final_level is not None and request.user.level == final_level):
+        return HttpResponseForbidden("Only the final employee level can complete this item.")
     if request.method == "POST":
         try:
             letter.mark_complete(by_user=request.user,

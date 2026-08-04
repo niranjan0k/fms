@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
 
 class Role(models.TextChoices):
@@ -17,6 +18,13 @@ class User(AbstractUser):
     def is_minister(self): return self.role == Role.MINISTER
     @property
     def is_employee(self): return self.role == Role.EMPLOYEE
+
+    def clean(self):
+        super().clean()
+        if self.role == Role.EMPLOYEE and not self.level:
+            raise ValidationError({"level": "Employee users must have a workflow level."})
+        if self.role != Role.EMPLOYEE and self.level:
+            raise ValidationError({"level": "Only employee users should have a workflow level."})
 
     def __str__(self):
         return f"{self.get_full_name() or self.username} ({self.get_role_display()})"
