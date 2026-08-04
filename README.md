@@ -71,6 +71,3 @@ Open `http://127.0.0.1:8000/accounts/login/`. In Django admin (`/admin/`), updat
 - `apps/audit` — audit log entries for movement events
 - `templates` — responsive FileFlow interface and pages
 
-## POC boundaries
-
-This is a demonstration implementation. Production rollout should add stronger authorization review, secure file handling, notification delivery, digital signatures, deployment hardening, backups, and load/security testing.
