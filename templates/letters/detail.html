@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>{{ letter.reference_no }}</h2>
+  <h3 style="margin-top:0">{{ letter.title }}</h3>
+  <p><span class="badge">{{ letter.get_status_display }}</span>
+     Current holder: <b>{{ letter.current_holder }}</b></p>
+  <p>{{ letter.description|linebreaksbr }}</p>
+  {% if letter.attachment %}<p><a class="btn secondary" href="{{ letter.attachment.url }}">Download attachment</a></p>{% endif %}
+</div>
+
+{% if can_act %}
+<div class="card">
+  <h3>Forward</h3>
+  <form method="post" action="{% url 'letter_forward' letter.pk %}">{% csrf_token %}{{ forward_form.as_p }}
+    <button class="btn" type="submit">Forward</button></form>
+  {% if can_complete %}
+  <hr>
+  <form method="post" action="{% url 'letter_complete' letter.pk %}">{% csrf_token %}
+    <textarea name="comment" placeholder="Optional completion note"></textarea>
+    <button class="btn danger" type="submit">Mark Complete</button>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="card">
+  <h3>Add Comment</h3>
+  <form method="post" action="{% url 'letter_comment' letter.pk %}">{% csrf_token %}{{ comment_form.as_p }}
+    <button class="btn" type="submit">Add Comment</button></form>
+  {% if comments %}<ul>{% for c in comments %}
+    <li><b>{{ c.author }}</b> · {{ c.created_at|date:"Y-m-d H:i" }}<br>{{ c.body|linebreaksbr }}</li>
+  {% endfor %}</ul>{% endif %}
+</div>
+
+<div class="card">
+  <h3>Movement History</h3>
+  <ul class="timeline">
+    {% for m in movements %}
+    <li><b>{{ m.get_action_display }}</b> · {{ m.from_user }} → {{ m.to_user }}
+      · <span style="color:#6b7280">{{ m.created_at|date:"Y-m-d H:i" }}</span>
+      {% if m.comment %}<br><i>"{{ m.comment }}"</i>{% endif %}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

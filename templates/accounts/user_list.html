@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <h2>Users</h2><a class="btn" href="{% url 'user_create' %}">+ New User</a>
+  </div>
+  <table><thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Level</th><th>Email</th></tr></thead><tbody>
+  {% for u in users %}<tr>
+    <td>{{ u.username }}</td><td>{{ u.get_full_name }}</td>
+    <td><span class="badge">{{ u.get_role_display }}</span></td>
+    <td>{{ u.level|default:"—" }}</td><td>{{ u.email }}</td>
+  </tr>{% endfor %}
+  </tbody></table>
+</div>
+{% endblock %}
