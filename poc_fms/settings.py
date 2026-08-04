@@ -46,7 +46,7 @@ TEMPLATES = [{
 }]
 WSGI_APPLICATION = "poc_fms.wsgi.application"
 
-db_url = urlparse(os.getenv("DATABASE_URL", "postgres://fms:fms@localhost:5432/fms"))
+db_url = urlparse(os.getenv("DATABASE_URL"))
 DATABASES = {"default": {
     "ENGINE": "django.db.backends.postgresql",
     "NAME": db_url.path.lstrip("/"),
