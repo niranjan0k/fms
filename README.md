@@ -28,7 +28,7 @@ Director → Minister → Director
                                       └→ Director (return)
 ```
 
-Comments are optional and are retained against the correspondence reference number. All creates, forwards, returns, and completions are recorded in the movement history and audit log.
+Comments are mandatory and would be show in every level of previous against the correspondence reference number. All creates, forwards, returns, and completions are recorded in the movement history and audit log.
 
 ## Local setup
 
