@@ -6,9 +6,11 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret")
+# Use Replit SESSION_SECRET if available, then DJANGO_SECRET_KEY, then dev fallback
+SECRET_KEY = os.getenv("SESSION_SECRET") or os.getenv("DJANGO_SECRET_KEY", "dev-insecure-key-change-me")
 DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
 ALLOWED_HOSTS = ["*"]
+CSRF_TRUSTED_ORIGINS = [f"https://{h}" for h in os.getenv("REPLIT_DOMAINS", "").split(",") if h]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -46,14 +48,14 @@ TEMPLATES = [{
 }]
 WSGI_APPLICATION = "poc_fms.wsgi.application"
 
-db_url = urlparse(os.getenv("DATABASE_URL"))
+db_url = urlparse(os.getenv("DATABASE_URL", ""))
 DATABASES = {"default": {
     "ENGINE": "django.db.backends.postgresql",
-    "NAME": db_url.path.lstrip("/"),
-    "USER": db_url.username,
-    "PASSWORD": db_url.password,
-    "HOST": db_url.hostname,
-    "PORT": db_url.port or 5432,
+    "NAME": db_url.path.lstrip("/") if db_url.path else os.getenv("PGDATABASE", ""),
+    "USER": db_url.username or os.getenv("PGUSER", ""),
+    "PASSWORD": db_url.password or os.getenv("PGPASSWORD", ""),
+    "HOST": db_url.hostname or os.getenv("PGHOST", "localhost"),
+    "PORT": db_url.port or os.getenv("PGPORT", 5432),
 }}
 
 AUTH_USER_MODEL = "accounts.User"
@@ -66,9 +68,13 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',  # or os.path.join(BASE_DIR, 'static')
+]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

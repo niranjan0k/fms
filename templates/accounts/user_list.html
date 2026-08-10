@@ -1,1 +1,61 @@
-{% extends "base.html" %}{% block title %}User management · FileFlow{% endblock %}{% block content %}<div class="page-heading"><div><h1>User management</h1><p>Create and review role-based access for the workflow.</p></div><a class="btn" href="{% url 'user_create' %}">＋ Create user</a></div><section class="card"><div class="table-wrap"><table><thead><tr><th>User</th><th>Role</th><th>Level</th><th>Email</th></tr></thead><tbody>{% for u in users %}<tr><td><strong>{{ u.get_full_name|default:u.username }}</strong><br><span class="muted">@{{ u.username }}</span></td><td><span class="badge {% if u.is_director %}director{% elif u.is_minister %}minister{% endif %}">{{ u.get_role_display }}</span></td><td>{{ u.level|default:"—" }}</td><td class="muted">{{ u.email|default:"—" }}</td></tr>{% empty %}<tr><td class="empty" colspan="4">No users have been created.</td></tr>{% endfor %}</tbody></table></div></section>{% endblock %}
+{% extends "base.html" %}
+{% block title %}All Users · FileFlow{% endblock %}
+
+  {% block header_content %}
+    <h4>All Users</h4>
+    {% if user.is_director %}
+      <div style="margin-left:auto">
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'user_create' %}"><i class="bi bi-file-earmark-plus sidebar-icon"></i> Create User</a>
+      </div>
+    {% endif %}
+  {% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Role</th>
+          <th>Level</th>
+          <th>Email</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>
+            <strong>{{ u.get_full_name|default:u.username }}</strong>
+            <div class="muted" style="font-size:12px">@{{ u.username }}</div>
+          </td>
+          <td>
+            <span class="badge {% if u.is_director %}director{% elif u.is_minister %}minister{% elif u.is_employee %}employee{% endif %}">
+              {{ u.get_role_display }}
+            </span>
+          </td>
+          <td>
+            {% if u.level %}
+              <span class="badge">Level {{ u.level }}</span>
+            {% else %}
+              <span class="muted">—</span>
+            {% endif %}
+          </td>
+          <td class="muted">{{ u.email|default:"—" }}</td>
+          <td>
+            {% if u.is_active %}
+              <span class="badge complete">Active</span>
+            {% else %}
+              <span class="badge">Inactive</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td class="empty" colspan="5">No users have been created yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

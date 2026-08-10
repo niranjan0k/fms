@@ -1,9 +1,148 @@
 {% extends "base.html" %}
 {% block title %}{{ letter.reference_no }} · FileFlow{% endblock %}
+
+{% block header_content %}
+  <h4>Correspondence Details</h4>
+  <div style="margin-left:auto">
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'letter_list' %}"><i class="bi bi-arrow-left"></i> Back to List</a>
+  </div>
+{% endblock %}
+
 {% block content %}
-<div class="page-heading"><div><p><a href="{% url 'letter_list' %}">← Back to dashboard</a></p><h1>{{ letter.title }}</h1><p>{{ letter.reference_no }}</p></div><span class="badge {% if letter.status == 'COMPLETE' %}complete{% endif %}">{{ letter.get_status_display }}</span></div>
-<div class="detail-grid"><div><section class="card card-pad"><h2 class="section-title">Letter details</h2><p class="section-note">Official correspondence and its current workflow location.</p><div style="margin-top:18px">{{ letter.description|default:"No description provided."|linebreaksbr }}</div>{% if letter.attachment %}<p style="margin:18px 0 0"><a class="btn secondary small" href="{{ letter.attachment.url }}">↓ Download attachment</a></p>{% endif %}<div class="meta-grid"><div><div class="meta-label">Current holder</div><div class="meta-value">{{ letter.current_holder.get_full_name|default:letter.current_holder.username }}</div></div><div><div class="meta-label">Created by</div><div class="meta-value">{{ letter.created_by.get_full_name|default:letter.created_by.username }}</div></div><div><div class="meta-label">Created</div><div class="meta-value">{{ letter.created_at|date:"d M Y, H:i" }}</div></div></div></section>
-{% if can_act %}<section class="card card-pad"><h2 class="section-title">Take action</h2><p class="section-note">Forward this item with an optional note.</p><form method="post" action="{% url 'letter_forward' letter.pk %}" style="margin-top:17px">{% csrf_token %}{{ forward_form.as_p }}<button class="btn" type="submit">Forward item →</button></form>{% if can_complete %}<div style="border-top:1px solid var(--line);margin:22px 0 16px"></div><p class="section-note" style="margin-bottom:9px">You are the final level in the workflow chain.</p><form method="post" action="{% url 'letter_complete' letter.pk %}">{% csrf_token %}<textarea name="comment" placeholder="Optional completion note"></textarea><button class="btn danger" type="submit">Mark complete</button></form>{% endif %}</section>{% endif %}
-<section class="card card-pad"><h2 class="section-title">Comments</h2><p class="section-note">Comments are retained against this reference number.</p><form method="post" action="{% url 'letter_comment' letter.pk %}" style="margin-top:17px">{% csrf_token %}{{ comment_form.as_p }}<button class="btn secondary" type="submit">Add comment</button></form>{% for c in comments %}<div class="comment"><strong>{{ c.author.get_full_name|default:c.author.username }}</strong> <span class="muted">· {{ c.created_at|date:"d M Y, H:i" }}</span><br>{{ c.body|linebreaksbr }}</div>{% empty %}<p class="muted" style="margin:17px 0 0">No comments have been added yet.</p>{% endfor %}</section></div>
-<aside><section class="card card-pad"><h2 class="section-title">Movement history</h2><p class="section-note" style="margin-bottom:19px">Complete audit trail for this item.</p><ol class="timeline">{% for m in movements %}<li><div class="event-title">{{ m.get_action_display }}</div><div>{{ m.from_user.get_full_name|default:m.from_user.username }} → {{ m.to_user.get_full_name|default:m.to_user.username }}</div><div class="event-time">{{ m.created_at|date:"d M Y, H:i" }}</div>{% if m.comment %}<div class="comment">{{ m.comment }}</div>{% endif %}</li>{% endfor %}</ol></section></aside></div>
+<div class="detail-grid">
+  <!-- Left column -->
+  <div>
+    <section class="card card-pad">
+      
+      <h4>File/Letter No: <b>{{ letter.reference_no }}</b></h4>
+
+      <div style="margin-top:18px;line-height:1.75;color:var(--ink)">Order/Letter Status: 
+        <span class="badge {% if letter.status == 'COMPLETE' %}complete{% elif letter.status == 'WITH_DIRECTOR' %}director{% elif letter.status == 'WITH_MINISTER' %}minister{% elif letter.status == 'WITH_EMPLOYEE' %}employee{% else %}draft{% endif %}" style="font-size:13px;padding:6px 14px">
+          {{ letter.get_status_display }}
+        </span>
+      </div>
+
+      <div style="margin-top:6px;line-height:1.75;color:var(--ink)">Subject: <b>{{ letter.title }}</b></div>
+
+      <div style="margin-top:18px;line-height:1.75;color:var(--ink)">
+        Description: <br>
+        <b>{{ letter.description|default:"No description provided."|linebreaksbr }}</b>
+      </div>
+
+      {% if letter.attachment %}
+      <p style="margin:18px 0 0">
+        <a class="btn secondary small" href="{{ letter.attachment.url }}">↓ Download attachment</a>
+      </p>
+      {% endif %}
+      <div class="meta-grid">
+        <div>
+          <div class="meta-label">Current holder</div>
+          <div class="meta-value">{{ letter.current_holder.get_full_name|default:letter.current_holder.username }}</div>
+          <div class="muted" style="font-size:11px;margin-top:2px">{{ letter.current_holder.get_role_display }}</div>
+        </div>
+        <div>
+          <div class="meta-label">Created by</div>
+          <div class="meta-value">{{ letter.created_by.get_full_name|default:letter.created_by.username }}</div>
+          <div class="muted" style="font-size:11px;margin-top:2px">{{ letter.created_by.get_role_display }}</div>
+        </div>
+        <div>
+          <div class="meta-label">Created</div>
+          <div class="meta-value">{{ letter.created_at|date:"d M Y" }}</div>
+          <div class="muted" style="font-size:11px;margin-top:2px">{{ letter.created_at|date:"H:i" }}</div>
+        </div>
+      </div>
+    </section>
+
+    {% if can_act %}
+    <section class="card">
+      <div class="card-header"><h5>Take Action</h5></div>
+      <div class="card-body">
+      <form method="post" action="{% url 'letter_forward' letter.pk %}">
+        {% csrf_token %}
+        {% for field in forward_form %}
+        <div class="field-wrap">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        {% endfor %}
+        <div class="text-center">
+        <button class="btn btn-primary" type="submit">Forward item <i class="bi icon-arrow-right"></i></button>
+        </div>
+      </form>
+
+      {% if can_complete %}
+      <hr class="divider">
+      <p class="section-note" style="margin-bottom:10px">You are the final level in the workflow chain and can mark this item complete.</p>
+      <form method="post" action="{% url 'letter_complete' letter.pk %}">
+        {% csrf_token %}
+        <div class="field-wrap">
+          <label>Completion note <span class="muted" style="font-weight:400">(optional)</span></label>
+          <textarea name="comment" rows="3" placeholder="Add a final note before completing…"></textarea>
+        </div>
+        <div class="text-center">
+        <button class="btn btn-danger" type="submit">✓ Mark Complete</button>
+        </div>
+      </form>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <section class="card">
+      <div class="card-header"><h5>Comments</h5></div>
+      <div class="card-body">
+      <div style="margin-top:16px">
+        {% for c in comments %}
+        <div class="comment">
+          <div class="comment-header">
+            {{ c.author.get_full_name|default:c.author.username }}
+            <span class="muted" style="font-weight:400;font-size:11px"> · {{ c.created_at|date:"d M Y, H:i" }}</span>
+          </div>
+          {{ c.body|linebreaksbr }}
+        </div>
+        {% empty %}
+        <p class="muted" style="margin:16px 0 0;font-size:13px">No comments have been added yet.</p>
+        {% endfor %}
+      </div>
+
+      <form method="post" action="{% url 'letter_comment' letter.pk %}" style="margin-top:16px">
+        {% csrf_token %}
+        {% for field in comment_form %}
+        <div class="field-wrap">
+          {{ field }}
+        </div>
+        {% endfor %}
+        <div class="text-center">
+        <button class="btn btn-secondary" type="submit">Add comment</button>
+        </div>
+      </form>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right column: movement history -->
+  <aside>
+    <section class="card card-pad">
+      <h2 class="section-title">Movement History</h2>
+      <p class="section-note" style="margin-bottom:20px">Complete audit trail for this item.</p>
+      <ol class="timeline">
+        {% for m in movements %}
+        <li {% if m.action == 'COMPLETE' %}class="complete"{% endif %}>
+          <div class="event-title">{{ m.get_action_display }}</div>
+          <div class="event-meta">
+            {{ m.from_user.get_full_name|default:m.from_user.username }}
+            {% if m.from_user != m.to_user %}→ {{ m.to_user.get_full_name|default:m.to_user.username }}{% endif %}
+          </div>
+          <div class="event-time">{{ m.created_at|date:"d M Y, H:i" }}</div>
+          {% if m.comment %}<div class="comment" style="margin-top:7px;font-size:12px">{{ m.comment }}</div>{% endif %}
+        </li>
+        {% empty %}
+        <li style="border:none;padding:0">
+          <p class="muted" style="font-size:13px;margin:0">No movement history yet.</p>
+        </li>
+        {% endfor %}
+      </ol>
+    </section>
+  </aside>
+</div>
 {% endblock %}

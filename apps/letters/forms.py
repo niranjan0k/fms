@@ -8,7 +8,7 @@ class LetterCreateForm(forms.ModelForm):
         fields = ("title", "description", "attachment")
 
 class ForwardForm(forms.Form):
-    to_user = forms.ModelChoiceField(queryset=User.objects.none())
+    to_user = forms.ModelChoiceField(queryset=User.objects.none(), empty_label="Select")
     comment = forms.CharField(widget=forms.Textarea(attrs={"rows": 3}), required=False)
 
     def __init__(self, *args, actor, letter, **kwargs):

@@ -28,3 +28,17 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.get_full_name() or self.username} ({self.get_role_display()})"
+
+
+class EmployeeLevel(models.Model):
+    level = models.PositiveIntegerField(unique=True, help_text="Workflow chain position (1 = first, highest = final approver).")
+    name = models.CharField(max_length=100, help_text="Descriptive name for this level, e.g. 'Initial Review'.")
+    description = models.TextField(blank=True, help_text="Optional details about this level's responsibilities.")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["level"]
+
+    def __str__(self):
+        return f"Level {self.level} — {self.name}"

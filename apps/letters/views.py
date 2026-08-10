@@ -1,6 +1,6 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Q, Count
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.accounts.models import Role, User
@@ -13,13 +13,11 @@ from .models import Letter, LetterStatus
 def letter_list(request):
     u = request.user
     qs = Letter.objects.all()
-    tab = request.GET.get("tab", "inbox")
-    if tab == "inbox":
-        qs = qs.filter(current_holder=u).exclude(status=LetterStatus.COMPLETE)
-    elif tab == "mine":
+    tab = request.GET.get("tab", "all")
+    if tab == "mine":
         qs = qs.filter(created_by=u)
     elif tab == "all":
-        pass  # everyone can view status per POC spec
+        pass
     all_letters = Letter.objects.all()
     return render(request, "letters/list.html", {
         "letters": qs, "tab": tab,
@@ -29,6 +27,18 @@ def letter_list(request):
         "total_count": all_letters.count(),
     })
 
+@login_required
+def letter_inbox(request):
+    u = request.user
+    qs = Letter.objects.filter(current_holder=u).exclude(status=LetterStatus.COMPLETE)
+    all_letters = Letter.objects.all()
+    return render(request, "letters/inbox.html", {
+        "letters": qs,
+        "inbox_count": all_letters.filter(current_holder=u).exclude(status=LetterStatus.COMPLETE).count(),
+        "open_count": all_letters.exclude(status=LetterStatus.COMPLETE).count(),
+        "complete_count": all_letters.filter(status=LetterStatus.COMPLETE).count(),
+        "total_count": all_letters.count(),
+    })
 
 @login_required
 def letter_create(request):
@@ -41,11 +51,10 @@ def letter_create(request):
             letter.created_by = request.user
             letter.current_holder = request.user
             letter.save()
-            # move DRAFT -> WITH_DIRECTOR immediately
-            letter.status = LetterStatus.WITH_DIRECTOR
+            # Move DRAFT → WITH_DIRECTOR via the allowed transition
+            director = request.user
+            letter.return_to_director(by_user=director, to_user=director, comment="")
             letter.save()
-            Movement.objects.create(letter=letter, from_user=request.user,
-                to_user=request.user, action="CREATE", comment="")
             messages.success(request, f"Created {letter.reference_no}")
             return redirect("letter_detail", pk=letter.pk)
     else:
@@ -129,3 +138,38 @@ def letter_comment(request, pk):
                 body=form.cleaned_data["comment"])
             messages.success(request, "Comment added.")
     return redirect("letter_detail", pk=pk)
+
+
+def _director(u): return u.is_authenticated and u.is_director
+
+@login_required
+@user_passes_test(_director)
+def reports(request):
+    from apps.workflow.models import Movement
+    total = Letter.objects.count()
+    by_status = {
+        "With Director": Letter.objects.filter(status=LetterStatus.WITH_DIRECTOR).count(),
+        "With Minister": Letter.objects.filter(status=LetterStatus.WITH_MINISTER).count(),
+        "With Employee": Letter.objects.filter(status=LetterStatus.WITH_EMPLOYEE).count(),
+        "Complete": Letter.objects.filter(status=LetterStatus.COMPLETE).count(),
+        "Draft": Letter.objects.filter(status=LetterStatus.DRAFT).count(),
+    }
+    by_creator = (
+        Letter.objects.values("created_by__first_name", "created_by__last_name", "created_by__username")
+        .annotate(count=Count("id"))
+        .order_by("-count")[:10]
+    )
+    recent_movements = (
+        Movement.objects.select_related("letter", "from_user", "to_user")
+        .order_by("-created_at")[:15]
+    )
+    recent_letters = Letter.objects.select_related("created_by", "current_holder").order_by("-created_at")[:10]
+    return render(request, "letters/reports.html", {
+        "total": total,
+        "by_status": by_status,
+        "by_creator": by_creator,
+        "recent_movements": recent_movements,
+        "recent_letters": recent_letters,
+        "open_count": Letter.objects.exclude(status=LetterStatus.COMPLETE).count(),
+        "complete_count": Letter.objects.filter(status=LetterStatus.COMPLETE).count(),
+    })

@@ -1,1 +1,40 @@
-{% extends "base.html" %}{% block title %}Create letter · FileFlow{% endblock %}{% block content %}<div class="page-heading"><div><h1>Create letter / order</h1><p>A unique reference number will be assigned automatically.</p></div></div><section class="card card-pad form-card"><h2>Correspondence details</h2><form method="post" enctype="multipart/form-data">{% csrf_token %}{{ form.as_p }}<button class="btn" type="submit">Create correspondence</button> <a class="btn secondary" href="{% url 'letter_list' %}">Cancel</a></form></section>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Create Letter / Order · FileFlow{% endblock %}
+
+  {% block header_content %}
+    <h4>Create Letter / Order</h4>
+      <div style="margin-left:auto">
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'letter_list' %}"><i class="bi bi-arrow-left"></i> Back to List</a>
+      </div>
+  {% endblock %}
+
+{% block content %}
+  <form method="post" enctype="multipart/form-data" style="margin-top:22px">
+    {% csrf_token %}
+
+    <div class="field-wrap">
+      <label for="{{ form.title.id_for_label }}">{{ form.title.label }} <span class="text-danger">*</span></label>
+      {{ form.title }}
+      {% if form.title.errors %}<ul class="errorlist">{% for e in form.title.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+
+    <div class="field-wrap">
+      <label for="{{ form.description.id_for_label }}">{{ form.description.label }} <span class="text-danger">*</span></label>
+      {{ form.description }}
+      <span class="helptext">Provide context or instructions for this correspondence.</span>
+      {% if form.description.errors %}<ul class="errorlist">{% for e in form.description.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+
+    <div class="field-wrap">
+      <label for="{{ form.attachment.id_for_label }}">{{ form.attachment.label }} <span class="muted" style="font-weight:400">(optional)</span></label>
+      {{ form.attachment }}
+      <span class="helptext">Attach a supporting document (PDF, Word, image, etc.).</span>
+      {% if form.attachment.errors %}<ul class="errorlist">{% for e in form.attachment.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+
+    <div class="text-center">
+      <button class="btn btn-sm btn-primary" type="submit">Create Correspondence</button>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'letter_list' %}">Cancel</a>
+    </div>
+  </form>
+{% endblock %}
