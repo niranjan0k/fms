@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Level Configuration · FileFlow{% endblock %}
+
+ {% block header_content %}
+    <h4>Level Configuration</h4>
+    <div style="margin-left:auto">
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'level_create' %}"><i class="bi bi-file-earmark-plus sidebar-icon"></i> Add Level</a>
+    </div>
+  {% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Level #</th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Users assigned</th>
+          <th style="width:140px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lvl in levels %}
+        <tr>
+          <td><span class="badge">Level {{ lvl.level }}</span></td>
+          <td><strong>{{ lvl.name }}</strong></td>
+          <td class="muted">{{ lvl.description|default:"—"|truncatewords:12 }}</td>
+          <td class="muted">{{ lvl.level|stringformat:"s" }}
+            {# Show count of employees at this level #}
+            {% with count=lvl.level %}—{% endwith %}
+          </td>
+          <td>
+            <div style="display:flex;gap:7px">
+              <a class="btn secondary small" href="{% url 'level_edit' lvl.pk %}">Edit</a>
+              <a class="btn danger small" href="{% url 'level_delete' lvl.pk %}">Delete</a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="empty">No levels configured yet. Add the first one above.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card card-pad" style="max-width:620px;margin-top:8px">
+  <h2 class="section-title">How levels work</h2>
+  <p class="section-note" style="margin-top:10px;line-height:1.7">
+    Letters are routed sequentially through levels: <strong>Director → Level 1 → Level 2 → … → Final Level → Complete</strong>.
+    The employee assigned to the highest-numbered level can mark a letter as complete.
+    Each level should have at least one user assigned in <a href="{% url 'user_list' %}">User Management</a>.
+  </p>
+</section>
+{% endblock %}

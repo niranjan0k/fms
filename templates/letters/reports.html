@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Reports · FileFlow{% endblock %}
+
+  {% block header_content %}
+    <h4>Dashboard</h4>
+  {% endblock %}
+
+{% block content %}
+
+<div class="stat-grid">
+  <div class="card stat-card">
+    <div class="stat-label">Total correspondence</div>
+    <div class="stat-value">{{ total }}</div>
+    <div class="stat-accent"></div>
+  </div>
+  <div class="card stat-card">
+    <div class="stat-label">Open / in progress</div>
+    <div class="stat-value">{{ open_count }}</div>
+    <div class="stat-accent amber"></div>
+  </div>
+  <div class="card stat-card">
+    <div class="stat-label">Completed</div>
+    <div class="stat-value">{{ complete_count }}</div>
+    <div class="stat-accent green"></div>
+  </div>
+  <div class="card stat-card">
+    <div class="stat-label">Completion rate</div>
+    <div class="stat-value">{% if total %}{{ complete_count|floatformat:0 }}%{% else %}—{% endif %}</div>
+    <div class="stat-accent"></div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+
+  <section class="card">
+    <div class="card-pad" style="border-bottom:1px solid var(--line)">
+      <h2 class="section-title">Status breakdown</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Status</th><th style="text-align:right">Count</th></tr>
+        </thead>
+        <tbody>
+          {% for label, count in by_status.items %}
+          <tr>
+            <td>
+              <span class="badge {% if label == 'Complete' %}complete{% elif label == 'With Director' %}director{% elif label == 'With Minister' %}minister{% elif label == 'With Employee' %}employee{% else %}draft{% endif %}">
+                {{ label }}
+              </span>
+            </td>
+            <td style="text-align:right;font-weight:750">{{ count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-pad" style="border-bottom:1px solid var(--line)">
+      <h2 class="section-title">Correspondence by creator</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Created by</th><th style="text-align:right">Count</th></tr>
+        </thead>
+        <tbody>
+          {% for row in by_creator %}
+          <tr>
+            <td>
+              {% with name=row.created_by__first_name|add:" "|add:row.created_by__last_name %}
+              {% if name|length > 1 %}{{ name }}{% else %}{{ row.created_by__username }}{% endif %}
+              {% endwith %}
+            </td>
+            <td style="text-align:right;font-weight:750">{{ row.count }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="2" class="empty">No data yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<section class="card" style="margin-bottom:18px">
+  <div class="card-pad" style="border-bottom:1px solid var(--line)">
+    <h2 class="section-title">Recent correspondence</h2>
+    <p class="section-note">Latest 10 letters and orders in the system.</p>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Reference</th><th>Subject</th><th>Status</th><th>Current location</th><th>Created</th></tr>
+      </thead>
+      <tbody>
+        {% for l in recent_letters %}
+        <tr>
+          <td><a class="ref" href="{% url 'letter_detail' l.pk %}">{{ l.reference_no }}</a></td>
+          <td><a href="{% url 'letter_detail' l.pk %}">{{ l.title }}</a></td>
+          <td>
+            <span class="badge {% if l.status == 'COMPLETE' %}complete{% elif l.status == 'WITH_DIRECTOR' %}director{% elif l.status == 'WITH_MINISTER' %}minister{% elif l.status == 'WITH_EMPLOYEE' %}employee{% else %}draft{% endif %}">
+              {{ l.get_status_display }}
+            </span>
+          </td>
+          <td class="muted">{{ l.current_holder.get_full_name|default:l.current_holder.username }}</td>
+          <td class="muted">{{ l.created_at|date:"d M Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="empty">No correspondence found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-pad" style="border-bottom:1px solid var(--line)">
+    <h2 class="section-title">Recent workflow movements</h2>
+    <p class="section-note">Latest 15 workflow actions across all correspondence.</p>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Reference</th><th>Action</th><th>From</th><th>To</th><th>Date &amp; Time</th></tr>
+      </thead>
+      <tbody>
+        {% for m in recent_movements %}
+        <tr>
+          <td><a class="ref" href="{% url 'letter_detail' m.letter.pk %}">{{ m.letter.reference_no }}</a></td>
+          <td>
+            <span class="badge {% if m.action == 'COMPLETE' %}complete{% elif m.action == 'FORWARD' %}director{% elif m.action == 'RETURN' %}warning{% endif %}">
+              {{ m.get_action_display }}
+            </span>
+          </td>
+          <td>{{ m.from_user.get_full_name|default:m.from_user.username }}</td>
+          <td>{{ m.to_user.get_full_name|default:m.to_user.username }}</td>
+          <td class="muted">{{ m.created_at|date:"d M Y, H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="empty">No movements yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

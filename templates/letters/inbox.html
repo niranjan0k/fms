@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · FileFlow{% endblock %}
+
+
+  {% block header_content %}
+    <h4>Orders / Files Inbox List</h4>
+    {% if user.is_director %}
+      <!-- display the button in float right of the header -->
+      <div style="margin-left:auto">
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'letter_create' %}"><i class="bi bi-file-earmark-plus sidebar-icon"></i> Create Letter / Order</a>
+      </div>
+    {% endif %}
+  {% endblock %}
+  
+{% block content %}
+<div class="stat-grid">
+  <div class="card stat-card">
+    <div class="stat-label">My pending items</div>
+    <div class="stat-value">{{ inbox_count }}</div>
+    <div class="stat-accent amber"></div>
+  </div>
+  <div class="card stat-card">
+    <div class="stat-label">Open correspondence</div>
+    <div class="stat-value">{{ open_count }}</div>
+    <div class="stat-accent"></div>
+  </div>
+  <div class="card stat-card">
+    <div class="stat-label">Completed</div>
+    <div class="stat-value">{{ complete_count }}</div>
+    <div class="stat-accent green"></div>
+  </div>
+  <div class="card stat-card">
+    <div class="stat-label">Total letters / orders</div>
+    <div class="stat-value">{{ total_count }}</div>
+    <div class="stat-accent"></div>
+  </div>
+</div>
+
+<section class="card">
+  <div class="card-header">My Inbox</div>
+  <div class="card-body">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Reference</th>
+            <th>Subject</th>
+            <th>Status</th>
+            <th>Current location</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for l in letters %}
+          <tr>
+            <td><a class="ref" href="{% url 'letter_detail' l.pk %}">{{ l.reference_no }}</a></td>
+            <td>
+              <a href="{% url 'letter_detail' l.pk %}" style="font-weight:600;color:var(--ink)">{{ l.title }}</a>
+              {% if l.description %}<div class="muted" style="font-size:12px;margin-top:2px">{{ l.description|truncatewords:8 }}</div>{% endif %}
+            </td>
+            <td>
+              <span class="badge {% if l.status == 'COMPLETE' %}complete{% elif l.status == 'WITH_DIRECTOR' %}director{% elif l.status == 'WITH_MINISTER' %}minister{% elif l.status == 'WITH_EMPLOYEE' %}employee{% else %}draft{% endif %}">
+                {{ l.get_status_display }}
+              </span>
+            </td>
+            <td>{{ l.current_holder.get_full_name|default:l.current_holder.username }}</td>
+            <td class="muted">{{ l.created_at|date:"d M Y" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="empty">No correspondence found in this view.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}

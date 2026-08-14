@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Role Rights · FileFlow{% endblock %}
+
+  {% block header_content %}
+    <h4>Role Rights</h4>
+  {% endblock %}
+
+{% block content %}
+
+<section class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:40%">Action / Permission</th>
+          <th style="text-align:center"><span class="badge director">Director</span></th>
+          <th style="text-align:center"><span class="badge minister">Minister</span></th>
+          <th style="text-align:center"><span class="badge employee">Employee</span></th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rights %}
+        <tr>
+          <td><strong>{{ r.action }}</strong></td>
+          <td style="text-align:center">
+            {% if r.director %}<span class="perm-check perm-yes">✓</span>{% else %}<span class="perm-check perm-no">—</span>{% endif %}
+          </td>
+          <td style="text-align:center">
+            {% if r.minister %}<span class="perm-check perm-yes">✓</span>{% else %}<span class="perm-check perm-no">—</span>{% endif %}
+          </td>
+          <td style="text-align:center">
+            {% if r.employee %}<span class="perm-check perm-yes">✓</span>{% else %}<span class="perm-check perm-no">—</span>{% endif %}
+          </td>
+          <td class="muted" style="font-size:12px">{{ r.note }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- <section class="card card-pad">
+  <h2 class="section-title">Role overview</h2>
+  <div style="margin-top:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+    <div>
+      <div style="margin-bottom:6px"><span class="badge director">Director</span></div>
+      <p style="margin:0;font-size:12.5px;color:var(--muted);line-height:1.6">
+        Super Admin. Creates and routes correspondence. Manages all users and system configuration.
+      </p>
+    </div>
+    <div>
+      <div style="margin-bottom:6px"><span class="badge minister">Minister</span></div>
+      <p style="margin:0;font-size:12.5px;color:var(--muted);line-height:1.6">
+        Top of hierarchy. Reviews items forwarded by the Director, comments, and returns to Director.
+      </p>
+    </div>
+    <div>
+      <div style="margin-bottom:6px"><span class="badge employee">Employee</span></div>
+      <p style="margin:0;font-size:12.5px;color:var(--muted);line-height:1.6">
+        Sequential approval chain. Each level reviews and forwards to the next, or returns to Director.
+      </p>
+    </div>
+  </div>
+</section> -->
+{% endblock %}

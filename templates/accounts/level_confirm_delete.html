@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Delete Level {{ level.level }} · FileFlow{% endblock %}
+
+  {% block header_content %}
+    <h4>Delete Level {{ level.level }}</h4>
+    <div style="margin-left:auto">
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'level_list' %}"><i class="bi bi-arrow-left"></i> Back to List</a>
+    </div>
+  {% endblock %}
+
+{% block content %}
+<section class="card card-pad">
+  <p style="margin:14px 0;color:var(--ink)">
+    You are about to delete <strong>Level {{ level.level }} — {{ level.name }}</strong>.
+    Any employees currently assigned to this level will no longer have a valid workflow position.
+  </p>
+  <form method="post" style="display:flex;gap:9px;margin-top:18px">
+    {% csrf_token %}
+    <button class="btn btn-danger" type="submit">Yes, Delete level</button>
+    <a class="btn btn-outline-primary" href="{% url 'level_list' %}">Cancel</a>
+  </form>
+</section>
+{% endblock %}
