@@ -3,6 +3,8 @@
 echo "Running Django migrations..."
 python manage.py migrate --fake-initial 2>&1 || echo "Migrations skipped (already applied)"
 
+python manage.py seed --noinput 2>&1 || echo "Seeding skipped (already applied)"
+
 echo "Creating superuser..."
 python manage.py shell << END
 import os
