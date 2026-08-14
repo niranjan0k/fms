@@ -31,7 +31,8 @@
 
       {% if letter.attachment %}
       <p style="margin:18px 0 0">
-        <a class="btn secondary small" href="{{ letter.attachment.url }}">↓ Download attachment</a>
+        Attachment: 
+        <a class="btn secondary small" href="{{ letter.attachment.url }}" target="_blank"><i class="bi bi-download"></i> <b>Download Attachment</b></a>
       </p>
       {% endif %}
       <div class="meta-grid">
